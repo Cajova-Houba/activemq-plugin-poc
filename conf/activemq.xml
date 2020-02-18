@@ -43,6 +43,10 @@
             <bean class="org.valesz.activemq.plugin.authorization.CustomMessageAuthorizationPolicy" xmlns="http://www.springframework.org/schema/beans"/>
         </messageAuthorizationPolicy>
 
+        <plugins>
+            <bean class="org.valesz.activemq.plugin.authentication.CustomAuthenticationPlugin" xmlns="http://www.springframework.org/schema/beans"/>
+        </plugins>
+
         <destinationPolicy>
             <policyMap>
                 <policyEntries>
