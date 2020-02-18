@@ -4,6 +4,7 @@ import org.apache.activemq.broker.ConnectionContext;
 import org.apache.activemq.command.Message;
 import org.apache.activemq.security.MessageAuthorizationPolicy;
 import org.apache.activemq.security.SecurityContext;
+import org.apache.activemq.util.ByteSequence;
 import org.valesz.activemq.data.AuthorizedMessage;
 
 import javax.jms.JMSException;
@@ -18,6 +19,9 @@ public class CustomMessageAuthorizationPolicy implements MessageAuthorizationPol
         System.out.println("====================================");
         System.out.println("Custom message authorization plugin:");
         System.out.println("Message: "+message);
+        ByteSequence content = message.getContent();
+        System.out.println("Message content length: "+content.length);
+        System.out.println("Message content raw data: "+content.data);
         System.out.println("Client id: "+connectionContext.getClientId());
         System.out.println("Client username: "+connectionContext.getUserName());
         SecurityContext sc = connectionContext.getSecurityContext();
