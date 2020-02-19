@@ -87,9 +87,11 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
 
             conn.disconnect();
 
-            Matcher m = Pattern.compile("\"value\":\"([\\w\\d\\s\"&'.!,?-]+)\",").matcher(outputSb.toString());
+            Matcher m = Pattern.compile("\"value\":\"([\\w\\d\\s\"&'’.!,?:#_%()$€/\\\\-]+)\",").matcher(outputSb.toString());
             if (m.find()) {
                 result = m.group(1);
+            } else {
+                System.out.println("Value not found, dumping output: "+outputSb.toString());
             }
 
         } catch (IOException e) {
