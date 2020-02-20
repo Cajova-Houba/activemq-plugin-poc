@@ -5,21 +5,28 @@ import org.apache.activemq.broker.ConnectionContext;
 import org.apache.activemq.command.ConnectionInfo;
 import org.apache.activemq.security.AbstractAuthenticationBroker;
 import org.apache.activemq.security.SecurityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CustomAuthenticationBroker.class);
 
     public CustomAuthenticationBroker(Broker next) {
         super(next);
@@ -45,9 +52,9 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
 
     @Override
     public SecurityContext authenticate(String username, String password, X509Certificate[] x509Certificates) throws SecurityException {
-        System.out.println("Authenticating user '"+username+"' with password '"+password+"'");
+        LOG.info("Authenticating user '{}'", username);
 
-        System.out.println("Calling authentication API");
+        LOG.trace("Calling authentication API");
 
         String authRes = callAuthenticationApiNoDependencies(username, password);
 
@@ -64,40 +71,84 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
         String result = "";
         try {
 
-            URL url = new URL("https://www.tronalddump.io/random/quote");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
+            String response = callApi(username, password);
 
-            if (conn.getResponseCode() != 200) {
-                System.out.println("Failed : HTTP error code : "
-                        + conn.getResponseCode());
-
-                return result;
-            }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    (conn.getInputStream())));
-
-            String output;
-            StringBuilder outputSb = new StringBuilder();
-            while ((output = br.readLine()) != null) {
-                outputSb.append(output);
-            }
-
-            conn.disconnect();
-
-            Matcher m = Pattern.compile("\"value\":\"([\\w\\d\\s\"&'’.!,?:#_%()$€/\\\\-]+)\",").matcher(outputSb.toString());
-            if (m.find()) {
-                result = m.group(1);
-            } else {
-                System.out.println("Value not found, dumping output: "+outputSb.toString());
-            }
+            result = handleResponse(response);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return result;
+    }
+
+    private String handleResponse(String response) {
+        if (response.isEmpty()) {
+            LOG.warn("Authentication failed, no response.");
+            return "";
+        }
+
+        Matcher m = Pattern.compile("\"value\":\"([\\w\\d\\s\"&'’.!,?:#_%()$€@/\\\\-]+)\",").matcher(response);
+        if (m.find()) {
+            return m.group(1);
+        } else {
+            LOG.warn("Value not found, dumping output: "+response);
+        }
+        return "";
+    }
+
+    private String callApi(String username, String password) throws IOException {
+        String apiUrl = getAuthApiUrl();
+
+        if (apiUrl.isEmpty()) {
+            LOG.warn("No authentication API url.");
+            return "";
+        }
+
+        URL url = new URL(apiUrl);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Accept", "application/json");
+
+        if (conn.getResponseCode() != 200) {
+            LOG.warn("Failed : HTTP error code : "
+                    + conn.getResponseCode());
+
+            return "";
+        }
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                (conn.getInputStream())));
+
+        String output;
+        StringBuilder outputSb = new StringBuilder();
+        while ((output = br.readLine()) != null) {
+            outputSb.append(output);
+        }
+
+        conn.disconnect();
+
+        return outputSb.toString();
+    }
+
+    private String getAuthApiUrl() {
+        Properties prop = new Properties();
+        String propFileName = "plugin.properties";
+
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
+
+        if (inputStream != null) {
+            try {
+                prop.load(inputStream);
+
+                return prop.getProperty("authentication.api.url","");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            LOG.warn("property file '" + propFileName + "' not found in the classpath");
+        }
+
+        return "";
     }
 }

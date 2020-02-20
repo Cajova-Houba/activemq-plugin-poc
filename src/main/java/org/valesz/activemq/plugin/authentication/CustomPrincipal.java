@@ -18,4 +18,11 @@ public class CustomPrincipal implements Principal {
     public String getValue() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "CustomPrincipal{" +
+                "value='" + value + '\'' +
+                '}';
+    }
 }
