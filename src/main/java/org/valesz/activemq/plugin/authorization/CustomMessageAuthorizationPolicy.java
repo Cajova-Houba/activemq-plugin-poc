@@ -68,32 +68,32 @@ public class CustomMessageAuthorizationPolicy implements MessageAuthorizationPol
     }
 
     private void dumpInfo(ConnectionContext connectionContext, Message message) {
-        LOG.trace("====================================");
-        LOG.trace("Custom message authorization plugin:");
-        LOG.trace("Message type: {}", message.getClass());
-        LOG.trace("Message: {}", message);
-        ByteSequence content = message.getContent();
-        LOG.trace("Message content length: {}", content.length);
-        LOG.trace("Message content raw data: {}", content.data);
-        LOG.trace("Message content string raw data: {}", new String(content.data));
-
-        LOG.trace("Message properties:");
-        try {
-            message.getProperties().forEach((k,v) -> LOG.trace("\t{}:{}", k,v));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        LOG.trace("Client id: {}", connectionContext.getClientId());
-        LOG.trace("Client username: {} ", connectionContext.getUserName());
-        SecurityContext sc = connectionContext.getSecurityContext();
-        LOG.trace("Security context: {}", sc);
-        if (sc != null) {
-            LOG.trace("Principals: {}", sc.getPrincipals());
-            for (Principal p : sc.getPrincipals()) {
-                LOG.trace("\tPrincipal name: {}", p.getName());
-                LOG.trace("\tPrincipal class: {}", p.getClass());
-            }
-        }
+//        LOG.trace("====================================");
+//        LOG.trace("Custom message authorization plugin:");
+//        LOG.trace("Message type: {}", message.getClass());
+//        LOG.trace("Message: {}", message);
+//        ByteSequence content = message.getContent();
+//        LOG.trace("Message content length: {}", content.length);
+//        LOG.trace("Message content raw data: {}", content.data);
+//        LOG.trace("Message content string raw data: {}", new String(content.data));
+//
+//        LOG.trace("Message properties:");
+//        try {
+//            message.getProperties().forEach((k,v) -> LOG.trace("\t{}:{}", k,v));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        LOG.trace("Client id: {}", connectionContext.getClientId());
+//        LOG.trace("Client username: {} ", connectionContext.getUserName());
+//        SecurityContext sc = connectionContext.getSecurityContext();
+//        LOG.trace("Security context: {}", sc);
+//        if (sc != null) {
+//            LOG.trace("Principals: {}", sc.getPrincipals());
+//            for (Principal p : sc.getPrincipals()) {
+//                LOG.trace("\tPrincipal name: {}", p.getName());
+//                LOG.trace("\tPrincipal class: {}", p.getClass());
+//            }
+//        }
     }
 
     private boolean handleAuthorizedMessage(ConnectionContext connectionContext, AuthorizedMessage authorizedMessage) {

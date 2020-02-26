@@ -3,6 +3,7 @@ package org.valesz.activemq.plugin.authentication;
 import org.apache.activemq.broker.Broker;
 import org.apache.activemq.broker.ConnectionContext;
 import org.apache.activemq.command.ConnectionInfo;
+import org.apache.activemq.jaas.GroupPrincipal;
 import org.apache.activemq.security.AbstractAuthenticationBroker;
 import org.apache.activemq.security.SecurityContext;
 import org.slf4j.Logger;
@@ -18,9 +19,7 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,7 +61,10 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
             @Override
             public Set<Principal> getPrincipals() {
                 Principal p = new CustomPrincipal(authRes);
-                return Collections.singleton(p);
+
+                Principal group = new GroupPrincipal("admin".equals(username) ? "admins" : "users");
+
+                return new HashSet<>(Arrays.asList(p, group));
             }
         };
     }

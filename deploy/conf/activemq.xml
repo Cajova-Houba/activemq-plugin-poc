@@ -19,7 +19,8 @@
         xmlns="http://www.springframework.org/schema/beans"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd
+">
 
     <!-- Allows us to use system properties as variables in this configuration file -->
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
@@ -39,6 +40,8 @@
     -->
     <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" dataDirectory="${activemq.data}">
 
+
+
         <!-- custom message level authorization -->
         <messageAuthorizationPolicy>
             <bean class="org.valesz.activemq.plugin.authorization.CustomMessageAuthorizationPolicy" xmlns="http://www.springframework.org/schema/beans"/>
@@ -46,8 +49,34 @@
 
         <plugins>
 
+            <!-- allows configuration changes in runtime: https://activemq.apache.org/runtime-configuration -->
+            <!--<runtimeConfigurationPlugin checkPeriod="1000" />-->
+
             <!-- custom authentication plugin -->
             <bean class="org.valesz.activemq.plugin.authentication.CustomAuthenticationPlugin" xmlns="http://www.springframework.org/schema/beans"/>
+
+
+            <bean class="org.valesz.activemq.plugin.authorization.ClientAuthorizationPlugin" xmlns="http://www.springframework.org/schema/beans">
+                <constructor-arg name="map">
+                    <authorizationMap xmlns="http://activemq.apache.org/schema/core">
+                        <authorizationEntries>
+                            <authorizationEntry queue=">" read="admins" write="admins" admin="admins" />
+                            <authorizationEntry queue="MN.discussion.>" read="users" write="admins" admin="admins" />
+
+                            <authorizationEntry topic=">" read="admins" write="admins" admin="admins" />
+                            <authorizationEntry topic="USERS.>" read="users" write="users" admin="users" />
+                            <authorizationEntry topic="GUEST.>" read="guests" write="guests,users" admin="guests,users" />
+
+                            <authorizationEntry topic="ActiveMQ.Advisory.>" read="guests,users" write="guests,users" admin="guests,users"/>
+                        </authorizationEntries>
+
+                        <!-- let's assign roles to temporary destinations. comment this entry if we don't want any roles assigned to temp destinations  -->
+                        <tempDestinationAuthorizationEntry>
+                            <tempDestinationAuthorizationEntry read="tempDestinationAdmins" write="tempDestinationAdmins" admin="tempDestinationAdmins"/>
+                        </tempDestinationAuthorizationEntry>
+                    </authorizationMap>
+                </constructor-arg>
+            </bean>
         </plugins>
 
         <destinationPolicy>

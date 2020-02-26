@@ -3,6 +3,10 @@ package org.valesz.activemq.plugin.authentication;
 import org.apache.activemq.broker.Broker;
 import org.apache.activemq.broker.BrokerPlugin;
 
+/**
+ * @org.apache.xbean.XBean element="customAuthenticationPlugin"
+ *
+ */
 public class CustomAuthenticationPlugin implements BrokerPlugin {
 
     @Override
