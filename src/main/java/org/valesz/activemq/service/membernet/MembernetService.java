@@ -32,14 +32,22 @@ public class MembernetService {
             return false;
         }
 
-        Response r = ClientBuilder.newClient()
-                .register(JacksonJsonProvider.class)
-                .target(apiUrl)
-                .request()
-                .get();
+        try {
+            apiUrl = apiUrl.replace("{discussionId}", destination.split(".")[2]);
 
-        LOG.debug("Status code returned for 'canRead' call: {}.", r.getStatus());
-        return r.getStatus() == 200;
+            Response r = ClientBuilder.newClient()
+                    .register(JacksonJsonProvider.class)
+                    .target(apiUrl)
+                    .request()
+                    .header("Authorization", "Bearer "+accessToken)
+                    .get();
+
+            LOG.debug("Status code returned for 'canRead' call: {}.", r.getStatus());
+            return r.getStatus() == 200;
+        } catch (Exception ex) {
+            LOG.error("Unexpected exception.", ex);
+            return false;
+        }
     }
 
     private String getAuthApiUrl() {
