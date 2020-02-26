@@ -42,10 +42,13 @@
 
 
 
-        <!-- custom message level authorization -->
-        <messageAuthorizationPolicy>
-            <bean class="org.valesz.activemq.plugin.authorization.CustomMessageAuthorizationPolicy" xmlns="http://www.springframework.org/schema/beans"/>
-        </messageAuthorizationPolicy>
+        <!--
+            custom message level authorization
+            not needed anymore
+         -->
+        <!--<messageAuthorizationPolicy>-->
+            <!--<bean class="org.valesz.activemq.plugin.authorization.CustomMessageAuthorizationPolicy" xmlns="http://www.springframework.org/schema/beans"/>-->
+        <!--</messageAuthorizationPolicy>-->
 
         <plugins>
 

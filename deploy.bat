@@ -1,3 +1,3 @@
-copy target\ActiveMQPluginTest-1.0-SNAPSHOT.jar C:\Users\valesz\Downloads\apache-activemq-5.15.11\lib
+copy target\ActiveMQPluginTest-1.0-SNAPSHOT.jar c:\Users\zdenek\tools\apache-activemq-5.15.11\lib
 
-copy conf\activemq.xml C:\Users\valesz\Downloads\apache-activemq-5.15.11\conf
+xcopy deploy\* c:\Users\zdenek\tools\apache-activemq-5.15.11\ /s /i /Y

@@ -8,6 +8,7 @@ import org.apache.activemq.security.AbstractAuthenticationBroker;
 import org.apache.activemq.security.SecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.valesz.activemq.service.tronalddump.TronaldDumpService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -70,87 +71,20 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
     }
 
     private String callAuthenticationApiNoDependencies(String username, String password) {
-        String result = "";
         try {
 
-            String response = callApi(username, password);
-
-            result = handleResponse(response);
+            return callApi(username, password);
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-        return result;
-    }
-
-    private String handleResponse(String response) {
-        if (response.isEmpty()) {
-            LOG.warn("Authentication failed, no response.");
+            LOG.error("Unexpected exception: ",e);
             return "";
         }
-
-        Matcher m = Pattern.compile("\"value\":\"([\\w\\d\\s\"&'’.!,?:#_%()$€@/\\\\-]+)\",").matcher(response);
-        if (m.find()) {
-            return m.group(1);
-        } else {
-            LOG.warn("Value not found, dumping output: "+response);
-        }
-        return "";
     }
 
     private String callApi(String username, String password) throws IOException {
-        String apiUrl = getAuthApiUrl();
 
-        if (apiUrl.isEmpty()) {
-            LOG.warn("No authentication API url.");
-            return "";
-        }
-
-        URL url = new URL(apiUrl);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setRequestProperty("Accept", "application/json");
-
-        if (conn.getResponseCode() != 200) {
-            LOG.warn("Failed : HTTP error code : "
-                    + conn.getResponseCode());
-
-            return "";
-        }
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-                (conn.getInputStream())));
-
-        String output;
-        StringBuilder outputSb = new StringBuilder();
-        while ((output = br.readLine()) != null) {
-            outputSb.append(output);
-        }
-
-        conn.disconnect();
-
-        return outputSb.toString();
-    }
-
-    private String getAuthApiUrl() {
-        Properties prop = new Properties();
-        String propFileName = "plugin.properties";
-
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
-
-        if (inputStream != null) {
-            try {
-                prop.load(inputStream);
-
-                return prop.getProperty("authentication.api.url","");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            LOG.warn("property file '" + propFileName + "' not found in the classpath");
-        }
-
-        return "";
+        TronaldDumpService service = new TronaldDumpService();
+        return service.getRandomQuote();
     }
 }

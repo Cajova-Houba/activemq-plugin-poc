@@ -31,7 +31,6 @@ public class CustomMessageAuthorizationPolicy implements MessageAuthorizationPol
         boolean res = true;
 
         if(isAuthorizedMessage(message)) {
-            LOG.info("Authorized message received.");
             if (message instanceof BytesMessage) {
                 res = handleBytesAuthorizedMessage(connectionContext, (BytesMessage)message);
             }
@@ -39,14 +38,11 @@ public class CustomMessageAuthorizationPolicy implements MessageAuthorizationPol
             // other message types...
         }
 
-        LOG.trace("====================================");
-
 
         return res;
     }
 
     private boolean handleBytesAuthorizedMessage(ConnectionContext connectionContext, BytesMessage message) {
-        LOG.info("Handling authorized message sent as bytes.");
 
         try {
             AuthorizedMessage am = new AuthorizedMessage(0, "", Arrays.asList(message.getStringProperty("authorizedClients").split(";")));
