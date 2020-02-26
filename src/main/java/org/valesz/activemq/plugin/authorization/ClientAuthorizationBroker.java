@@ -6,8 +6,13 @@ import org.apache.activemq.broker.region.Subscription;
 import org.apache.activemq.command.ConsumerInfo;
 import org.apache.activemq.security.AuthorizationBroker;
 import org.apache.activemq.security.AuthorizationMap;
+import org.apache.activemq.security.SecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.valesz.activemq.plugin.authentication.CustomPrincipal;
+import org.valesz.activemq.service.membernet.MembernetService;
+
+import java.security.Principal;
 
 /**
  * This plugin provides queue-level authorization. Currently only intercepts access to MN.discussion.* queues.
@@ -53,7 +58,34 @@ public class ClientAuthorizationBroker extends AuthorizationBroker {
      */
     private Subscription callMembernetAuthorization(ConnectionContext context, ConsumerInfo info) throws Exception {
         LOG.info("Calling membernet authorization for user '{}' and destination '{}'.", context.getUserName(), info.getDestination());
-        // todo: MN service
+        SecurityContext sc = context.getSecurityContext();
+        if (sc == null) {
+            LOG.error("No security context, client should be authenticated at this point!");
+            throw new SecurityException("No security context, client should be authenticated at this point!");
+        }
+
+        // find principal with access token
+        CustomPrincipal accessTokenPrincipal = null;
+        for(Principal p : sc.getPrincipals()) {
+            if (p instanceof CustomPrincipal) {
+                accessTokenPrincipal = (CustomPrincipal) p;
+            }
+        }
+
+        if (accessTokenPrincipal == null) {
+            LOG.error("No principal with access token for user '{}'.", context.getUserName());
+            throw new SecurityException("No access token found among user's principals.");
+        }
+
+        MembernetService membernetService = new MembernetService();
+        String destination = info.getDestination().getQualifiedName();
+
+        if (!membernetService.canReadDestination(destination, accessTokenPrincipal.getValue())) {
+            LOG.error("User '{}' is not authorized to read destination '{}'.", context.getUserName(), destination);
+            throw new SecurityException("User '"+context.getUserName()+"' is not authorized to read destination '"+destination+"'.");
+        }
+
+        // authorization ok, continue in broker filter chain
         return getNext().addConsumer(context, info);
     }
 
