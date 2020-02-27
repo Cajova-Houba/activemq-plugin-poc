@@ -35,6 +35,8 @@
           init-method="start" destroy-method="stop">
     </bean>
 
+    <bean id="membernetService" class="org.valesz.activemq.service.membernet.MembernetServiceImpl" />
+
     <!--
         The <broker> element is used to configure the ActiveMQ broker.
     -->
@@ -56,7 +58,9 @@
             <!--<runtimeConfigurationPlugin checkPeriod="1000" />-->
 
             <!-- custom authentication plugin -->
-            <bean class="org.valesz.activemq.plugin.authentication.CustomAuthenticationPlugin" xmlns="http://www.springframework.org/schema/beans"/>
+            <bean class="org.valesz.activemq.plugin.authentication.CustomAuthenticationPlugin" xmlns="http://www.springframework.org/schema/beans">
+                <constructor-arg name="membernetService" ref="membernetService"/>
+            </bean>
 
 
             <bean class="org.valesz.activemq.plugin.authorization.ClientAuthorizationPlugin" xmlns="http://www.springframework.org/schema/beans">
@@ -79,6 +83,7 @@
                         </tempDestinationAuthorizationEntry>
                     </authorizationMap>
                 </constructor-arg>
+                <constructor-arg name="membernetService" ref="membernetService"/>
             </bean>
         </plugins>
 

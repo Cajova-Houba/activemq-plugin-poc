@@ -2,9 +2,11 @@ package org.valesz.activemq.plugin.authentication;
 
 import org.apache.activemq.security.SecurityContext;
 import org.junit.Test;
+import org.valesz.activemq.service.membernet.MembernetService;
 
 import java.security.Principal;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
@@ -16,8 +18,22 @@ public class CustomAuthenticationBrokerTest {
     @Test
     public void testAuthenticate() {
 
-        CustomAuthenticationBroker broker = new CustomAuthenticationBroker(null);
-        SecurityContext sc = broker.authenticate("", "", null);
+        CustomAuthenticationBroker broker = new CustomAuthenticationBroker(null, new MembernetService() {
+            @Override
+            public boolean canReadDestination(String destination, String accessToken) {
+                return true;
+            }
+
+            @Override
+            public boolean authenticate(String username, String accessToken) {
+                return true;
+            }
+        });
+
+        final String username = "username";
+        final String accessToken = "accessToken";
+
+        SecurityContext sc = broker.authenticate(username, accessToken, null);
 
         assertNotNull("Null security context!", sc);
         assertFalse("No principals!", sc.getPrincipals().isEmpty());
@@ -30,8 +46,7 @@ public class CustomAuthenticationBrokerTest {
             }
         }
 
-        assertNotNull("Custom principal not included!", cp);
-        assertFalse("Custom principal value is empty!", cp.getValue().isEmpty());
-        System.out.println(cp.getValue());
+        assertNotNull("No principal with access token!", cp);
+        assertEquals("Wrong access token set as principal!", accessToken, cp.getValue());
     }
 }

@@ -8,28 +8,24 @@ import org.apache.activemq.security.AbstractAuthenticationBroker;
 import org.apache.activemq.security.SecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.valesz.activemq.service.membernet.MembernetService;
+import org.valesz.activemq.service.membernet.MembernetServiceImpl;
 import org.valesz.activemq.service.tronalddump.TronaldDumpService;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomAuthenticationBroker.class);
 
-    public CustomAuthenticationBroker(Broker next) {
+    private MembernetService membernetService;
+
+    public CustomAuthenticationBroker(Broker next, MembernetService membernetService) {
         super(next);
+        this.membernetService = membernetService;
     }
 
     @Override
@@ -50,35 +46,35 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
         }
     }
 
+    /**
+     * Client authentication.
+     *
+     * @param username MN username.
+     * @param password OAuth2 access token. Principal with this as a value will be added to security context if the authentication
+     *                 is successful.
+     * @param x509Certificates Not required.
+     * @return
+     * @throws SecurityException
+     */
     @Override
     public SecurityContext authenticate(String username, String password, X509Certificate[] x509Certificates) throws SecurityException {
         LOG.info("Authenticating user '{}'", username);
 
         LOG.trace("Calling authentication API");
 
-        String authRes = callAuthenticationApiNoDependencies(username, password);
+        if (membernetService.authenticate(username, password)) {
+            return new SecurityContext(username) {
+                @Override
+                public Set<Principal> getPrincipals() {
+                    Principal p = new CustomPrincipal(password);
 
-        return new SecurityContext(username) {
-            @Override
-            public Set<Principal> getPrincipals() {
-                Principal p = new CustomPrincipal(authRes);
+                    Principal group = new GroupPrincipal("admin".equals(username) ? "admins" : "users");
 
-                Principal group = new GroupPrincipal("admin".equals(username) ? "admins" : "users");
-
-                return new HashSet<>(Arrays.asList(p, group));
-            }
-        };
-    }
-
-    private String callAuthenticationApiNoDependencies(String username, String password) {
-        try {
-
-            return callApi(username, password);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            LOG.error("Unexpected exception: ",e);
-            return "";
+                    return new HashSet<>(Arrays.asList(p, group));
+                }
+            };
+        } else {
+            throw new SecurityException("Authentication failed for [" + username + "].");
         }
     }
 

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.valesz.activemq.plugin.authentication.CustomPrincipal;
 import org.valesz.activemq.service.membernet.MembernetService;
+import org.valesz.activemq.service.membernet.MembernetServiceImpl;
 
 import java.security.Principal;
 
@@ -22,13 +23,16 @@ public class ClientAuthorizationBroker extends AuthorizationBroker {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientAuthorizationBroker.class);
 
+    private MembernetService membernetService;
+
     /**
      * Intercept access to these queues and use MN authorization.
      */
     private static final String MN_MESSAGE_Q_PREFIX = "queue://MN.discussion.";
 
-    public ClientAuthorizationBroker(Broker next, AuthorizationMap authorizationMap) {
+    public ClientAuthorizationBroker(Broker next, AuthorizationMap authorizationMap, MembernetService membernetService) {
         super(next, authorizationMap);
+        this.membernetService = membernetService;
     }
 
     @Override
@@ -77,7 +81,7 @@ public class ClientAuthorizationBroker extends AuthorizationBroker {
             throw new SecurityException("No access token found among user's principals.");
         }
 
-        MembernetService membernetService = new MembernetService();
+        MembernetServiceImpl membernetService = new MembernetServiceImpl();
         String destination = info.getDestination().getQualifiedName();
 
         if (!membernetService.canReadDestination(destination, accessTokenPrincipal.getValue())) {
