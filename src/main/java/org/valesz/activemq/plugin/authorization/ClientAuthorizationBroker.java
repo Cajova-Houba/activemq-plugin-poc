@@ -13,6 +13,7 @@ import org.valesz.activemq.plugin.authentication.CustomPrincipal;
 import org.valesz.activemq.service.membernet.MembernetService;
 import org.valesz.activemq.service.membernet.MembernetServiceImpl;
 
+import java.nio.file.attribute.GroupPrincipal;
 import java.security.Principal;
 
 /**
@@ -69,11 +70,20 @@ public class ClientAuthorizationBroker extends AuthorizationBroker {
         }
 
         // find principal with access token
+        // or check if its admin
+        boolean isAdmin = false;
         CustomPrincipal accessTokenPrincipal = null;
         for(Principal p : sc.getPrincipals()) {
             if (p instanceof CustomPrincipal) {
                 accessTokenPrincipal = (CustomPrincipal) p;
+            } else if (p instanceof GroupPrincipal) {
+                isAdmin = p.getName().equals("admins");
             }
+        }
+
+        if (isAdmin) {
+            LOG.info("Admin, skipping MN authorization.");
+            return getNext().addConsumer(context, info);
         }
 
         if (accessTokenPrincipal == null) {
@@ -81,7 +91,6 @@ public class ClientAuthorizationBroker extends AuthorizationBroker {
             throw new SecurityException("No access token found among user's principals.");
         }
 
-        MembernetServiceImpl membernetService = new MembernetServiceImpl();
         String destination = info.getDestination().getQualifiedName();
 
         if (!membernetService.canReadDestination(destination, accessTokenPrincipal.getValue())) {

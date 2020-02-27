@@ -30,4 +30,16 @@ public class MembernetServiceTest {
         assertFalse("Authentication should have failed!", res);
     }
 
+    // unignore this test if you have correct username:access token combination and want to test it
+    @Ignore
+    @Test
+    public void testCanReadDestination() {
+        final String destination = "queue://MN.discussion.1";
+        final String accessToken = "correct token doesn't belong to repo :)";
+        MembernetServiceImpl membernetService = new MembernetServiceImpl();
+
+        boolean res = membernetService.canReadDestination(destination, accessToken);
+        assertTrue("Should be able to read destination!", res);
+    }
+
 }

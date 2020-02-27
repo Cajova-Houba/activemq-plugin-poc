@@ -43,7 +43,12 @@ public class MembernetServiceImpl implements MembernetService {
         }
 
         try {
-            apiUrl = apiUrl.replace("{discussionId}", destination.split(".")[2]);
+            String[] splitDestination = destination.split("[.]");
+            if (splitDestination.length != 3) {
+                LOG.warn("Unexpected destination format: {}", destination);
+                return false;
+            }
+            apiUrl = apiUrl.replace("{discussionId}", splitDestination[2]);
 
             Response r = ClientBuilder.newClient()
                     .register(JacksonJsonProvider.class)
