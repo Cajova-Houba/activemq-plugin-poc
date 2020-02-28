@@ -8,6 +8,7 @@ import org.apache.activemq.security.AbstractAuthenticationBroker;
 import org.apache.activemq.security.SecurityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.valesz.activemq.Utils;
 import org.valesz.activemq.service.membernet.MembernetService;
 import org.valesz.activemq.service.membernet.MembernetServiceImpl;
 import org.valesz.activemq.service.tronalddump.TronaldDumpService;
@@ -21,11 +22,18 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomAuthenticationBroker.class);
 
+    private static final String PROPERTY_FILE_NAME = "plugin.properties";
+    private static final String PUBLISHER_USERNAME_PROP = "microapp.chat.username";
+    private static final String PUBLISHER_PASSWORD_PROP = "microapp.chat.password";
+
+    private Properties properties;
+
     private MembernetService membernetService;
 
     public CustomAuthenticationBroker(Broker next, MembernetService membernetService) {
         super(next);
         this.membernetService = membernetService;
+        properties = Utils.initializeProperties(PROPERTY_FILE_NAME);
     }
 
     @Override
@@ -62,13 +70,25 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
 
         LOG.trace("Calling authentication API");
 
-        if (membernetService.authenticate(username, password) || "admin".equals(username)) {
+        // check if the user being authenticated is publisher or not
+        if (authenticatePublisher(username, password)) {
+            LOG.info("User '{}' authenticated as publisher.", username);
+            return new SecurityContext(username) {
+                @Override
+                public Set<Principal> getPrincipals() {
+                    Principal groupPrincipal = new GroupPrincipal("admins");
+                    return Collections.singleton(groupPrincipal);
+                }
+            };
+
+
+        // if not publisher, use MN to authenticate him
+        } else if (membernetService.authenticate(username, password)) {
             return new SecurityContext(username) {
                 @Override
                 public Set<Principal> getPrincipals() {
                     Principal p = new CustomPrincipal(password);
-
-                    Principal group = new GroupPrincipal("admin".equals(username) ? "admins" : "users");
+                    Principal group = new GroupPrincipal("users");
 
                     return new HashSet<>(Arrays.asList(p, group));
                 }
@@ -78,9 +98,30 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
         }
     }
 
+    /**
+     * Checks that the username and password matches the ones of the publisher.
+     *
+     * @param username
+     * @param password
+     * @return
+     */
+    private boolean authenticatePublisher(String username, String password) {
+        String pubUsername = getProperty(PUBLISHER_USERNAME_PROP);
+        String pubPassword = getProperty(PUBLISHER_PASSWORD_PROP);
+        return !pubUsername.isEmpty() && !pubPassword.isEmpty() && username.equals(pubUsername) && password.equals(pubPassword);
+    }
+
     private String callApi(String username, String password) throws IOException {
 
         TronaldDumpService service = new TronaldDumpService();
         return service.getRandomQuote();
+    }
+
+    private String getProperty(String key) {
+        if (properties == null) {
+            return "";
+        }
+
+        return properties.getProperty(key, "");
     }
 }

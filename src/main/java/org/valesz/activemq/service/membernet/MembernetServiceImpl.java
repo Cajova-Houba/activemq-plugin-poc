@@ -3,6 +3,7 @@ package org.valesz.activemq.service.membernet;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.valesz.activemq.Utils;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
@@ -25,7 +26,7 @@ public class MembernetServiceImpl implements MembernetService {
 
     public MembernetServiceImpl() {
         LOG.info("Creating new instance of MN service. Property file name: {}.", PROPERTY_FILE_NAME);
-        this.properties = initializeProperties(PROPERTY_FILE_NAME);
+        this.properties = Utils.initializeProperties(PROPERTY_FILE_NAME);
     }
 
     /**
@@ -113,30 +114,6 @@ public class MembernetServiceImpl implements MembernetService {
             LOG.error("Unexpected exception.", ex);
             return false;
         }
-    }
-
-    /**
-     * Initializes new properties object from given property file.
-     *
-     * @param propertyFileName
-     * @return Property file or null on failure.
-     */
-    private Properties initializeProperties(String propertyFileName) {
-        try {
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propertyFileName);
-            if (inputStream != null) {
-                Properties p = new Properties();
-                p.load(inputStream);
-                return p;
-            } else {
-                LOG.warn("property file '{}' not found in the classpath.", propertyFileName);
-            }
-        } catch (Exception ex) {
-            LOG.error("Unexpected exception while loading properties from file '{}'.", propertyFileName);
-            LOG.error("Details: ", ex);
-        }
-
-        return null;
     }
 
     private String getProperty(String key) {
