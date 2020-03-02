@@ -12,13 +12,15 @@ import static org.junit.Assert.assertNotNull;
 
 public class CustomAuthenticationBrokerTest {
 
+    private CustomAuthenticationBrokerConfiguration configuration = new CustomAuthenticationBrokerConfiguration("u", "p");
+
     /**
      * Check that everything works and no exception is thrown.
      */
     @Test
     public void testAuthenticate() {
 
-        CustomAuthenticationBroker broker = new CustomAuthenticationBroker(null, new MembernetService() {
+        CustomAuthenticationBroker broker = new CustomAuthenticationBroker(null, configuration, new MembernetService() {
             @Override
             public boolean canReadDestination(String destination, String accessToken) {
                 return true;

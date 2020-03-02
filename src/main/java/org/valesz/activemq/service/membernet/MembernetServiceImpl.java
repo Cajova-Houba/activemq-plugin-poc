@@ -8,7 +8,6 @@ import org.valesz.activemq.Utils;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -18,15 +17,11 @@ public class MembernetServiceImpl implements MembernetService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MembernetServiceImpl.class);
 
-    private static final String PROPERTY_FILE_NAME = "plugin.properties";
-    private static final String IS_AUTH_TO_READ_DISSCUSION_PROP = "mn.canRead.api.url";
-    private static final String GET_USER_DETAILS_PROP = "mn.user.details.api.url";
+    private MembernetServiceConfiguration configuration;
 
-    private Properties properties;
-
-    public MembernetServiceImpl() {
-        LOG.info("Creating new instance of MN service. Property file name: {}.", PROPERTY_FILE_NAME);
-        this.properties = Utils.initializeProperties(PROPERTY_FILE_NAME);
+    public MembernetServiceImpl(MembernetServiceConfiguration configuration) {
+        this.configuration = configuration;
+        LOG.info("Creating new instance of MN service.");
     }
 
     /**
@@ -38,7 +33,7 @@ public class MembernetServiceImpl implements MembernetService {
      * @return True if user can read from the destination.
      */
     public boolean canReadDestination(String destination, String accessToken) {
-        String apiUrl = getProperty(IS_AUTH_TO_READ_DISSCUSION_PROP);
+        String apiUrl = configuration.canReadDiscussionUrl;
         if (apiUrl.isEmpty()) {
             return false;
         }
@@ -84,7 +79,7 @@ public class MembernetServiceImpl implements MembernetService {
             return false;
         }
 
-        String apiUrl = getProperty(GET_USER_DETAILS_PROP);
+        String apiUrl = configuration.userDetailsUrl;
         if (apiUrl.isEmpty()) {
             LOG.warn("No API url.");
             return false;
@@ -114,13 +109,5 @@ public class MembernetServiceImpl implements MembernetService {
             LOG.error("Unexpected exception.", ex);
             return false;
         }
-    }
-
-    private String getProperty(String key) {
-        if (properties == null) {
-            return "";
-        }
-
-        return properties.getProperty(key, "");
     }
 }

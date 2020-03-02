@@ -35,8 +35,21 @@
           init-method="start" destroy-method="stop">
     </bean>
 
-    <bean id="membernetService" class="org.valesz.activemq.service.membernet.MembernetServiceImpl" />
+    <!-- configuration beans for plugins -->
+    <bean id="membernetServiceConfig" class="org.valesz.activemq.service.membernet.MembernetServiceConfiguration">
+        <constructor-arg name="userDetailsUrl" value="http://localhost:8080/rest/resource/user/me"/>
+        <constructor-arg name="canReadDiscussionUrl" value="http://localhost:8080/rest/resource/discussion/{discussionId}/canRead"/>
+    </bean>
 
+    <bean id="authBrokerConfiguration" class="org.valesz.activemq.plugin.authentication.CustomAuthenticationBrokerConfiguration">
+        <constructor-arg name="chatMicroappUsername" value="chat-publisher"/>
+        <constructor-arg name="chatMicroappPassword" value="chat-publisher"/>
+
+    </bean>
+
+    <bean id="membernetService" class="org.valesz.activemq.service.membernet.MembernetServiceImpl" >
+        <constructor-arg name="configuration" ref="membernetServiceConfig"/>
+    </bean>
     <!--
         The <broker> element is used to configure the ActiveMQ broker.
     -->
@@ -44,13 +57,6 @@
 
 
 
-        <!--
-            custom message level authorization
-            not needed anymore
-         -->
-        <!--<messageAuthorizationPolicy>-->
-            <!--<bean class="org.valesz.activemq.plugin.authorization.CustomMessageAuthorizationPolicy" xmlns="http://www.springframework.org/schema/beans"/>-->
-        <!--</messageAuthorizationPolicy>-->
 
         <plugins>
 
@@ -60,6 +66,7 @@
             <!-- custom authentication plugin -->
             <bean class="org.valesz.activemq.plugin.authentication.CustomAuthenticationPlugin" xmlns="http://www.springframework.org/schema/beans">
                 <constructor-arg name="membernetService" ref="membernetService"/>
+                <constructor-arg name="configuration" ref="authBrokerConfiguration"/>
             </bean>
 
 

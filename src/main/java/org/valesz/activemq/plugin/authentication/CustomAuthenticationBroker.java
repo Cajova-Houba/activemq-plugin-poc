@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.valesz.activemq.Utils;
 import org.valesz.activemq.service.membernet.MembernetService;
-import org.valesz.activemq.service.membernet.MembernetServiceImpl;
 import org.valesz.activemq.service.tronalddump.TronaldDumpService;
 
 import java.io.IOException;
@@ -22,18 +21,14 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomAuthenticationBroker.class);
 
-    private static final String PROPERTY_FILE_NAME = "plugin.properties";
-    private static final String PUBLISHER_USERNAME_PROP = "microapp.chat.username";
-    private static final String PUBLISHER_PASSWORD_PROP = "microapp.chat.password";
-
-    private Properties properties;
+    private CustomAuthenticationBrokerConfiguration configuration;
 
     private MembernetService membernetService;
 
-    public CustomAuthenticationBroker(Broker next, MembernetService membernetService) {
+    public CustomAuthenticationBroker(Broker next, CustomAuthenticationBrokerConfiguration configuration, MembernetService membernetService) {
         super(next);
+        this.configuration = configuration;
         this.membernetService = membernetService;
-        properties = Utils.initializeProperties(PROPERTY_FILE_NAME);
     }
 
     @Override
@@ -106,22 +101,8 @@ public class CustomAuthenticationBroker extends AbstractAuthenticationBroker {
      * @return
      */
     private boolean authenticatePublisher(String username, String password) {
-        String pubUsername = getProperty(PUBLISHER_USERNAME_PROP);
-        String pubPassword = getProperty(PUBLISHER_PASSWORD_PROP);
+        String pubUsername = configuration.chatMicroappUsername;
+        String pubPassword = configuration.chatMicroappPassword;
         return !pubUsername.isEmpty() && !pubPassword.isEmpty() && username.equals(pubUsername) && password.equals(pubPassword);
-    }
-
-    private String callApi(String username, String password) throws IOException {
-
-        TronaldDumpService service = new TronaldDumpService();
-        return service.getRandomQuote();
-    }
-
-    private String getProperty(String key) {
-        if (properties == null) {
-            return "";
-        }
-
-        return properties.getProperty(key, "");
     }
 }
